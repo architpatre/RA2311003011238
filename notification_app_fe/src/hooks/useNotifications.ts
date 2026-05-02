@@ -23,7 +23,6 @@ export const useNotifications = () => {
 
     logEvent("frontend", "debug", "hook", "Preparing notification payload for backend submission.");
 
-    // Placeholder for actual API integration
     await new Promise((resolve) => setTimeout(resolve, 400));
 
     setNotificationText("");

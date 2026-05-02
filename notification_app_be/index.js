@@ -20,6 +20,4 @@ app.post("/notifications", (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Notification backend placeholder running on http://localhost:${PORT}`);
-});
+app.listen(PORT);

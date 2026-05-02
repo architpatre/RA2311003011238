@@ -1,12 +1,6 @@
 # Logging Middleware
 
-This folder contains the reusable logging middleware design and implementation for the frontend notification app.
-
-## Purpose
-
-- Capture meaningful lifecycle events
-- Send logs to the evaluation service
-- Support frontend-specific log packages and levels
+Reusable frontend log client.
 
 ## Usage
 
