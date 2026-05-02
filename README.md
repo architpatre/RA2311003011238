@@ -5,5 +5,5 @@ Stage 1 frontend work for a campus notification app.
 Includes:
 - `notification_app_fe/`
 - `logging-middleware/`
-- `notification_system_design.md`
+- `Notification_System_Design.md`
 - `notification_app_be/`
