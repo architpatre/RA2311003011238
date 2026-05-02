@@ -1,4 +1,4 @@
-import { logEvent } from "../logging-middleware/logClient";
+import { Log } from "./logger.js";
 
 type Notification = {
   ID: string;
@@ -33,11 +33,11 @@ const calculateScore = (notification: Notification): number => {
   return totalScore;
 };
 
-export const getTopNotifications = (
+export const getTopNotifications = async (
   notifications: Notification[],
   topN: number = 10
-): Notification[] => {
-  logEvent("backend", "debug", "utils", `calculating top ${topN} from ${notifications.length} notifications`);
+): Promise<Notification[]> => {
+  await Log("backend", "debug", "utils", `calculating top ${topN} from ${notifications.length} notifications`);
 
   const scored = notifications.map((n) => ({
     notification: n,
@@ -48,22 +48,22 @@ export const getTopNotifications = (
 
   const result = scored.slice(0, topN).map((s) => s.notification);
 
-  logEvent("backend", "info", "utils", `top ${topN} notifications computed successfully`);
+  await Log("backend", "info", "utils", `top ${topN} notifications computed successfully`);
 
   return result;
 };
 
-export const maintainTopN = (
+export const maintainTopN = async (
   currentTop: Notification[],
   newNotification: Notification,
   topN: number = 10
-): Notification[] => {
-  logEvent("backend", "debug", "utils", `new notification received: ${newNotification.ID}`);
+): Promise<Notification[]> => {
+  await Log("backend", "debug", "utils", `new notification received: ${newNotification.ID}`);
 
   if (currentTop.length < topN) {
     currentTop.push(newNotification);
     currentTop.sort((a, b) => calculateScore(b) - calculateScore(a));
-    logEvent("backend", "debug", "utils", `added to top ${topN}, current size: ${currentTop.length}`);
+    await Log("backend", "debug", "utils", `added to top ${topN}, current size: ${currentTop.length}`);
     return currentTop;
   }
 
@@ -74,9 +74,9 @@ export const maintainTopN = (
     currentTop.pop();
     currentTop.push(newNotification);
     currentTop.sort((a, b) => calculateScore(b) - calculateScore(a));
-    logEvent("backend", "debug", "utils", `replaced lowest score, new score: ${newScore}`);
+    await Log("backend", "debug", "utils", `replaced lowest score, new score: ${newScore}`);
   } else {
-    logEvent("backend", "debug", "utils", `new notification score too low: ${newScore}, skipped`);
+    await Log("backend", "debug", "utils", `new notification score too low: ${newScore}, skipped`);
   }
 
   return currentTop;

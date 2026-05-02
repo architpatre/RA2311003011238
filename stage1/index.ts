@@ -1,5 +1,5 @@
-import { logEvent } from "../logging-middleware/logClient";
-import { getTopNotifications } from "./notificationManager";
+import { Log } from "../logging-middleware/logClient";
+import { getTopNotifications } from "./notificationManager.js";
 
 type Notification = {
   ID: string;
@@ -11,41 +11,41 @@ type Notification = {
 const API_URL = "http://20.207.122.201/evaluation-service/notifications";
 
 const fetchNotifications = async (): Promise<Notification[]> => {
-  logEvent("backend", "info", "api", "fetching notifications from API");
+  await Log("backend", "info", "api", "fetching notifications from API");
 
   try {
     const response = await fetch(API_URL);
 
     if (!response.ok) {
-      logEvent("backend", "error", "api", `API returned status ${response.status}`);
+      await Log("backend", "error", "api", `API returned status ${response.status}`);
       throw new Error(`API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    logEvent("backend", "debug", "api", `received ${data.notifications?.length || 0} notifications`);
+    const data = (await response.json()) as { notifications: Notification[] };
+    await Log("backend", "debug", "api", `received ${data.notifications?.length || 0} notifications`);
 
     return data.notifications || [];
   } catch (error) {
-    logEvent("backend", "error", "api", `fetch failed: ${error}`);
+    await Log("backend", "error", "api", `fetch failed: ${error}`);
     throw error;
   }
 };
 
 const main = async () => {
-  logEvent("backend", "info", "config", "stage1 notification priority inbox starting");
+  await Log("backend", "info", "config", "stage1 notification priority inbox starting");
 
   try {
     const notifications = await fetchNotifications();
 
     if (notifications.length === 0) {
-      logEvent("backend", "warn", "api", "no notifications received");
+      await Log("backend", "warn", "api", "no notifications received");
       console.log("No notifications available.");
       return;
     }
 
-    logEvent("backend", "debug", "utils", `processing ${notifications.length} notifications`);
+    await Log("backend", "debug", "utils", `processing ${notifications.length} notifications`);
 
-    const topNotifications = getTopNotifications(notifications, 10);
+    const topNotifications = await getTopNotifications(notifications, 10);
 
     console.log("\n=== Top 10 Priority Notifications ===\n");
     topNotifications.forEach((notif, index) => {
@@ -54,9 +54,9 @@ const main = async () => {
       console.log(`   Timestamp: ${notif.Timestamp}\n`);
     });
 
-    logEvent("backend", "info", "config", "top 10 notifications displayed successfully");
+    await Log("backend", "info", "config", "top 10 notifications displayed successfully");
   } catch (error) {
-    logEvent("backend", "fatal", "config", `stage1 failed: ${error}`);
+    await Log("backend", "fatal", "config", `stage1 failed: ${error}`);
     console.error("Error:", error);
     process.exit(1);
   }

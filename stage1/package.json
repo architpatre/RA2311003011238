@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "test": "node --loader ts-node/esm test.ts",
-    "start": "node dist/index.js"
+    "build": "tsc --outDir dist",
+    "test": "npm run build && node dist/stage1/test.js",
+    "start": "npm run build && node dist/stage1/index.js"
   },
   "dependencies": {},
   "devDependencies": {
