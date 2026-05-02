@@ -55,6 +55,9 @@ Logs are posted to `http://20.207.122.201/evaluation-service/logs`.
 - `stage1/`
   - `index.ts` — API fetch and main entry
   - `notificationManager.ts` — priority algorithm
+  - `mockData.ts` — mock notifications for testing
+  - `test.ts` — validation tests
+  - `package.json` — dependencies
   - `tsconfig.json`
 
 ## Stage 1
@@ -64,12 +67,14 @@ Logs are posted to `http://20.207.122.201/evaluation-service/logs`.
 **Problem:** Users lose track due to high volume. Solution: display top 10 most important unread notifications first.
 
 **Priority Calculation:**
+
 - Type weight: Placement=3, Result=2, Event=1
 - Recency: newer notifications score higher
 - Formula: `totalScore = (typeWeight * 100) + recencyScore`
 - Recency decays at 0.1 per hour: `recencyScore = max(0, 10 - hoursOld * 0.1)`
 
 **Algorithm:**
+
 1. Fetch all notifications from API
 2. Calculate score for each notification
 3. Sort by score descending
@@ -77,6 +82,7 @@ Logs are posted to `http://20.207.122.201/evaluation-service/logs`.
 
 **Efficient Top-N Maintenance:**
 When new notifications arrive continuously:
+
 - If heap size < N, add notification and re-sort
 - If heap size = N, compare new notification score with the lowest score in heap
 - If new score > lowest, remove lowest and add new notification
@@ -84,6 +90,9 @@ When new notifications arrive continuously:
 - Time complexity: O(N log N) for initial sort, O(log N) per new notification
 
 **Implementation:**
+
 - `getTopNotifications()` — batch processing for initial top 10
 - `maintainTopN()` — incremental update as new notifications arrive
 - All operations logged via middleware with package types: `api`, `utils`, `config`
+
+
