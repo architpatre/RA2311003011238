@@ -95,12 +95,13 @@ When new notifications arrive continuously:
 - `maintainTopN()` — incremental update as new notifications arrive
 - All operations logged via middleware with package types: `api`, `utils`, `config`
 
+- getTopNotifications()-
+
 **Running:**
 
 - `cd stage1 && npm start`
 - If the notifications API responds `401`, you need credentials for the protected route.
 - Register once (prints `clientId`/`clientSecret` to terminal): `EVALUATION_SERVICE_ACCESS_CODE=... npm start`
 - Registration also requires: `EVALUATION_SERVICE_EMAIL`, `EVALUATION_SERVICE_NAME`, `EVALUATION_SERVICE_ROLLNO`, `EVALUATION_SERVICE_MOBILENO`, `EVALUATION_SERVICE_GITHUB_USERNAME`.
-- Then retry with either:
-  - `EVALUATION_SERVICE_TOKEN=... npm start` (if you have a token endpoint), or
-  - `EVALUATION_SERVICE_CLIENT_ID=... EVALUATION_SERVICE_CLIENT_SECRET=... npm start` (if Basic auth is supported).
+- Then run auth to fetch a token: `EVALUATION_SERVICE_CLIENT_ID=... EVALUATION_SERVICE_CLIENT_SECRET=... npm start`
+- `npm start` will call `POST /auth` automatically when `EVALUATION_SERVICE_CLIENT_ID` and `EVALUATION_SERVICE_CLIENT_SECRET` are set and `EVALUATION_SERVICE_TOKEN` is not.

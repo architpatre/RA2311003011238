@@ -10,8 +10,10 @@ type Notification = {
 
 const API_URL = "http://20.207.122.201/evaluation-service/notifications";
 const REGISTER_URL = "http://20.207.122.201/evaluation-service/register";
+const AUTH_URL = "http://20.207.122.201/evaluation-service/auth";
 
 type RegistrationResponse = { clientId: string; clientSecret: string };
+type AuthResponse = { token: string };
 
 type RegistrationPayload = {
   accessCode: string;
@@ -50,11 +52,39 @@ const registerClient = async (payload: RegistrationPayload): Promise<Registratio
   return data;
 };
 
+const getAuthToken = async (clientId: string, clientSecret: string): Promise<string> => {
+  await Log("backend", "info", "api", "requesting auth token via evaluation-service/auth");
+
+  const response = await fetch(AUTH_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId, clientSecret }),
+  });
+
+  if (!response.ok) {
+    const bodyText = await response.text().catch(() => "");
+    if (bodyText) {
+      await Log("backend", "debug", "api", `auth error body: ${bodyText.slice(0, 500)}`);
+    }
+    await Log("backend", "error", "api", `auth failed with status ${response.status}`);
+    throw new Error(`Auth API error: ${response.status}${bodyText ? ` - ${bodyText}` : ""}`);
+  }
+
+  const data = (await response.json()) as AuthResponse;
+  if (!data?.token) {
+    await Log("backend", "error", "api", "auth response missing token");
+    throw new Error("Auth response missing token");
+  }
+
+  await Log("backend", "info", "api", "auth succeeded (token received)");
+  return data.token;
+};
+
 const fetchNotifications = async (): Promise<Notification[]> => {
   await Log("backend", "info", "api", "fetching notifications from API");
 
   try {
-    const token = process.env.EVALUATION_SERVICE_TOKEN;
+    let token = process.env.EVALUATION_SERVICE_TOKEN;
     const clientId = process.env.EVALUATION_SERVICE_CLIENT_ID;
     const clientSecret = process.env.EVALUATION_SERVICE_CLIENT_SECRET;
 
@@ -63,9 +93,9 @@ const fetchNotifications = async (): Promise<Notification[]> => {
       headers.Authorization = `Bearer ${token}`;
       await Log("backend", "debug", "config", "using EVALUATION_SERVICE_TOKEN for notifications fetch");
     } else if (clientId && clientSecret) {
-      const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-      headers.Authorization = `Basic ${basic}`;
-      await Log("backend", "debug", "config", "using Basic auth (client id/secret) for notifications fetch");
+      token = await getAuthToken(clientId, clientSecret);
+      headers.Authorization = `Bearer ${token}`;
+      await Log("backend", "debug", "config", "using token from /auth for notifications fetch");
     }
 
     const response = await fetch(API_URL, { headers: Object.keys(headers).length ? headers : undefined });
@@ -116,8 +146,8 @@ const main = async () => {
       process.stdout.write("Save these now (cannot be retrieved again):\n");
       process.stdout.write(`EVALUATION_SERVICE_CLIENT_ID=${clientId}\n`);
       process.stdout.write(`EVALUATION_SERVICE_CLIENT_SECRET=${clientSecret}\n\n`);
-      process.stdout.write("Next: set EVALUATION_SERVICE_TOKEN if your prompt provides a token endpoint,\n");
-      process.stdout.write("or retry `npm start` with Basic auth env vars above if supported.\n\n");
+      process.stdout.write("Next: run auth to get token:\n");
+      process.stdout.write(`EVALUATION_SERVICE_CLIENT_ID=${clientId} EVALUATION_SERVICE_CLIENT_SECRET=${clientSecret} npm start\n\n`);
     }
 
     const notifications = await fetchNotifications();

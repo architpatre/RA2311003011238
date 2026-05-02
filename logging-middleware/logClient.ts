@@ -35,11 +35,23 @@ export const Log = async (
   try {
     validate(stack, level, pkg, message);
 
+    const token = process.env.EVALUATION_SERVICE_TOKEN;
+    const clientId = process.env.EVALUATION_SERVICE_CLIENT_ID;
+    const clientSecret = process.env.EVALUATION_SERVICE_CLIENT_SECRET;
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    } else if (clientId && clientSecret) {
+      const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+      headers.Authorization = `Basic ${basic}`;
+    }
+
     const response = await fetch(LOG_API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ stack, level, package: pkg, message }),
     });
 
