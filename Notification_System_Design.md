@@ -98,4 +98,9 @@ When new notifications arrive continuously:
 **Running:**
 
 - `cd stage1 && npm start`
-- If the notifications API responds `401`, set `EVALUATION_SERVICE_TOKEN` and retry.
+- If the notifications API responds `401`, you need credentials for the protected route.
+- Register once (prints `clientId`/`clientSecret` to terminal): `EVALUATION_SERVICE_ACCESS_CODE=... npm start`
+- Registration also requires: `EVALUATION_SERVICE_EMAIL`, `EVALUATION_SERVICE_NAME`, `EVALUATION_SERVICE_ROLLNO`, `EVALUATION_SERVICE_MOBILENO`, `EVALUATION_SERVICE_GITHUB_USERNAME`.
+- Then retry with either:
+  - `EVALUATION_SERVICE_TOKEN=... npm start` (if you have a token endpoint), or
+  - `EVALUATION_SERVICE_CLIENT_ID=... EVALUATION_SERVICE_CLIENT_SECRET=... npm start` (if Basic auth is supported).
