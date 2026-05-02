@@ -1,4 +1,4 @@
-import { Log } from "../logging-middleware/logClient";
+import { Log } from "../logging-middleware/logClient.js";
 import { getTopNotifications } from "./notificationManager.js";
 
 type Notification = {
@@ -14,7 +14,14 @@ const fetchNotifications = async (): Promise<Notification[]> => {
   await Log("backend", "info", "api", "fetching notifications from API");
 
   try {
-    const response = await fetch(API_URL);
+    const token = process.env.EVALUATION_SERVICE_TOKEN;
+    const response = await fetch(API_URL, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+
+    if (token) {
+      await Log("backend", "debug", "config", "using EVALUATION_SERVICE_TOKEN for notifications fetch");
+    }
 
     if (!response.ok) {
       await Log("backend", "error", "api", `API returned status ${response.status}`);
@@ -39,7 +46,7 @@ const main = async () => {
 
     if (notifications.length === 0) {
       await Log("backend", "warn", "api", "no notifications received");
-      console.log("No notifications available.");
+      process.stdout.write("No notifications available.\n");
       return;
     }
 
@@ -47,17 +54,17 @@ const main = async () => {
 
     const topNotifications = await getTopNotifications(notifications, 10);
 
-    console.log("\n=== Top 10 Priority Notifications ===\n");
+    process.stdout.write("\n=== Top 10 Priority Notifications ===\n\n");
     topNotifications.forEach((notif, index) => {
-      console.log(`${index + 1}. [${notif.Type}] ${notif.Message}`);
-      console.log(`   ID: ${notif.ID}`);
-      console.log(`   Timestamp: ${notif.Timestamp}\n`);
+      process.stdout.write(`${index + 1}. [${notif.Type}] ${notif.Message}\n`);
+      process.stdout.write(`   ID: ${notif.ID}\n`);
+      process.stdout.write(`   Timestamp: ${notif.Timestamp}\n\n`);
     });
 
     await Log("backend", "info", "config", "top 10 notifications displayed successfully");
   } catch (error) {
     await Log("backend", "fatal", "config", `stage1 failed: ${error}`);
-    console.error("Error:", error);
+    process.stderr.write(`Error: ${String(error)}\n`);
     process.exit(1);
   }
 };

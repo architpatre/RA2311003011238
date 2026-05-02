@@ -1,4 +1,4 @@
-import { Log } from "./logger.js";
+import { Log } from "../logging-middleware/logClient.js";
 import { getTopNotifications, maintainTopN } from "./notificationManager.js";
 import { mockNotifications } from "./mockData.js";
 
@@ -12,23 +12,23 @@ type Notification = {
 const runTests = async () => {
   await Log("backend", "info", "config", "starting stage1 validation tests");
 
-  console.log("\n=== Test 1: Calculate Top 10 from Mock Data ===\n");
+  process.stdout.write("\n=== Test 1: Calculate Top 10 from Mock Data ===\n\n");
 
   try {
     const top10 = await getTopNotifications(mockNotifications as Notification[], 10);
 
-    console.log(`Received ${mockNotifications.length} notifications, computed top 10:\n`);
+    process.stdout.write(`Received ${mockNotifications.length} notifications, computed top 10:\n\n`);
     top10.forEach((notif, index) => {
-      console.log(`${index + 1}. [${notif.Type}] ${notif.Message} (${notif.ID.substring(0, 8)}...)`);
+      process.stdout.write(`${index + 1}. [${notif.Type}] ${notif.Message} (${notif.ID.substring(0, 8)}...)\n`);
     });
 
     await Log("backend", "info", "utils", "test 1 passed: top 10 computed");
   } catch (error) {
     await Log("backend", "error", "utils", `test 1 failed: ${error}`);
-    console.error("Test 1 failed:", error);
+    process.stderr.write(`Test 1 failed: ${String(error)}\n`);
   }
 
-  console.log("\n=== Test 2: Verify Type Ordering (Placement > Result > Event) ===\n");
+  process.stdout.write("\n=== Test 2: Verify Type Ordering (Placement > Result > Event) ===\n\n");
 
   try {
     const top10 = await getTopNotifications(mockNotifications as Notification[], 10);
@@ -37,29 +37,29 @@ const runTests = async () => {
     const resultCount = top10.filter((n) => n.Type === "Result").length;
     const eventCount = top10.filter((n) => n.Type === "Event").length;
 
-    console.log(`Top 10 distribution: Placement=${placementCount}, Result=${resultCount}, Event=${eventCount}`);
+    process.stdout.write(`Top 10 distribution: Placement=${placementCount}, Result=${resultCount}, Event=${eventCount}\n`);
 
     if (placementCount >= resultCount && resultCount >= eventCount) {
-      console.log("✓ Type ordering correct");
+      process.stdout.write("✓ Type ordering correct\n");
       await Log("backend", "info", "utils", "test 2 passed: type ordering verified");
     } else {
-      console.log("✗ Type ordering incorrect");
+      process.stdout.write("✗ Type ordering incorrect\n");
       await Log("backend", "warn", "utils", "test 2: type ordering not as expected");
     }
   } catch (error) {
     await Log("backend", "error", "utils", `test 2 failed: ${error}`);
-    console.error("Test 2 failed:", error);
+    process.stderr.write(`Test 2 failed: ${String(error)}\n`);
   }
 
-  console.log("\n=== Test 3: Incremental Top-N Maintenance ===\n");
+  process.stdout.write("\n=== Test 3: Incremental Top-N Maintenance ===\n\n");
 
   try {
     const initial = await getTopNotifications(
       (mockNotifications.slice(0, 5) as unknown as Notification[]),
       3
     );
-    console.log(`Initial top 3 from 5 notifications:`);
-    initial.forEach((n, i) => console.log(`  ${i + 1}. ${n.Type}`));
+    process.stdout.write("Initial top 3 from 5 notifications:\n");
+    initial.forEach((n, i) => process.stdout.write(`  ${i + 1}. ${n.Type}\n`));
 
     const newNotif: Notification = {
       ID: "new-notif-id",
@@ -69,21 +69,21 @@ const runTests = async () => {
     };
 
     const updated = await maintainTopN(initial, newNotif, 3);
-    console.log(`After adding new Placement notification:`);
-    updated.forEach((n, i) => console.log(`  ${i + 1}. ${n.Type}`));
+    process.stdout.write("After adding new Placement notification:\n");
+    updated.forEach((n, i) => process.stdout.write(`  ${i + 1}. ${n.Type}\n`));
 
     await Log("backend", "info", "utils", "test 3 passed: incremental maintenance works");
   } catch (error) {
     await Log("backend", "error", "utils", `test 3 failed: ${error}`);
-    console.error("Test 3 failed:", error);
+    process.stderr.write(`Test 3 failed: ${String(error)}\n`);
   }
 
   await Log("backend", "info", "config", "stage1 validation tests complete");
-  console.log("\n=== All validation tests finished ===\n");
+  process.stdout.write("\n=== All validation tests finished ===\n\n");
 };
 
 runTests().catch(async (error) => {
   await Log("backend", "fatal", "config", `validation failed: ${error}`);
-  console.error("Fatal error:", error);
+  process.stderr.write(`Fatal error: ${String(error)}\n`);
   process.exit(1);
 });

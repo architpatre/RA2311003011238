@@ -25,6 +25,7 @@ const validate = (stack: string, level: string, pkg: string, message: string) =>
   }
 };
 
+
 export const Log = async (
   stack: LogStack,
   level: LogLevel,
@@ -44,7 +45,6 @@ export const Log = async (
 
     return response.json();
   } catch (error) {
-    console.warn("Logging middleware could not post log:", error);
     return null;
   }
 };

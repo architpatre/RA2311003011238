@@ -77,17 +77,17 @@ Logs are posted to `http://20.207.122.201/evaluation-service/logs`.
 
 1. Fetch all notifications from API
 2. Calculate score for each notification
-3. Sort by score descending
-4. Take top 10
+3. Maintain a min-heap of size 10 while scanning
+4. Convert heap to array and sort descending for display
 
 **Efficient Top-N Maintenance:**
 When new notifications arrive continuously:
 
-- If heap size < N, add notification and re-sort
-- If heap size = N, compare new notification score with the lowest score in heap
-- If new score > lowest, remove lowest and add new notification
-- Otherwise, skip
-- Time complexity: O(N log N) for initial sort, O(log N) per new notification
+- Keep a min-heap of size N (root is the current lowest priority in the top list)
+- If heap size < N, push the new notification
+- If heap is full, compare new score with root; replace root only if higher
+- Display list is derived by sorting the heap snapshot descending
+- Time complexity: O(M log N) for batch (M notifications), O(log N) per incremental insert
 
 **Implementation:**
 
@@ -95,4 +95,7 @@ When new notifications arrive continuously:
 - `maintainTopN()` — incremental update as new notifications arrive
 - All operations logged via middleware with package types: `api`, `utils`, `config`
 
+**Running:**
 
+- `cd stage1 && npm start`
+- If the notifications API responds `401`, set `EVALUATION_SERVICE_TOKEN` and retry.

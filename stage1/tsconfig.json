@@ -9,9 +9,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
+    "rootDir": "..",
     "declaration": false,
     "resolveJsonModule": true
   },
-  "include": ["*.ts"],
+  "include": ["*.ts", "../logging-middleware/logClient.ts"],
   "exclude": ["node_modules", "dist"]
 }
