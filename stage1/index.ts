@@ -12,7 +12,11 @@ const API_URL = "http://20.207.122.201/evaluation-service/notifications";
 const REGISTER_URL = "http://20.207.122.201/evaluation-service/register";
 const AUTH_URL = "http://20.207.122.201/evaluation-service/auth";
 
-type RegistrationResponse = { clientId: string; clientSecret: string };
+type RegistrationResponse = {
+  clientId: string;
+  clientSecret: string;
+  raw?: unknown;
+};
 type AuthResponse = { token: string };
 
 type RegistrationPayload = {
@@ -39,17 +43,38 @@ const registerClient = async (payload: RegistrationPayload): Promise<Registratio
       await Log("backend", "debug", "api", `registration error body: ${bodyText.slice(0, 500)}`);
     }
     await Log("backend", "error", "api", `registration failed with status ${response.status}`);
+    if (response.status === 409) {
+      throw new Error(
+        `Registration API error: 409 - already registered. Use your saved EVALUATION_SERVICE_CLIENT_ID and EVALUATION_SERVICE_CLIENT_SECRET (cannot be retrieved again).`
+      );
+    }
     throw new Error(`Registration API error: ${response.status}${bodyText ? ` - ${bodyText}` : ""}`);
   }
 
-  const data = (await response.json()) as RegistrationResponse;
-  if (!data?.clientId || !data?.clientSecret) {
-    await Log("backend", "error", "api", "registration response missing clientId/clientSecret");
+  const bodyText = await response.text().catch(() => "");
+  if (bodyText) {
+    await Log("backend", "debug", "api", `registration success body: ${bodyText.slice(0, 500)}`);
+  }
+
+  let raw: any = null;
+  try {
+    raw = bodyText ? JSON.parse(bodyText) : null;
+  } catch {
+    raw = bodyText;
+  }
+
+  const clientId = raw?.clientId ?? raw?.clientID ?? raw?.ClientId ?? raw?.ClientID;
+  const clientSecret = raw?.clientSecret ?? raw?.clientSECRET ?? raw?.ClientSecret ?? raw?.ClientSecretKey;
+
+  if (!clientId || !clientSecret) {
+    await Log("backend", "error", "api", "registration response did not include clientId/clientSecret");
+    process.stderr.write("Registration response received but did not include clientId/clientSecret.\n");
+    process.stderr.write(`Raw response: ${bodyText || "<empty>"}\n`);
     throw new Error("Registration response missing clientId/clientSecret");
   }
 
-  await Log("backend", "info", "api", "registration succeeded (clientId/clientSecret received)");
-  return data;
+  await Log("backend", "info", "api", "registration succeeded (clientId/clientSecret parsed)");
+  return { clientId, clientSecret, raw };
 };
 
 const getAuthToken = async (clientId: string, clientSecret: string): Promise<string> => {
